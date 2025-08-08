@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flashcards คำกริยา 3 ช่อง | Canva Code</title>
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { height: 100%; }
+    body { font-family: "Inter","Noto Sans Thai",system-ui,-apple-system,Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }
+    /* Flip card helpers */
+    .scene { perspective: 1600px; }
+    .card-3d { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(.2,.7,.2,1); }
+    .card-3d.is-flipped { transform: rotateY(180deg); }
+    .card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .card-back { transform: rotateY(180deg); }
+    /* Nice subtle glow on hover */
+    .hover-glow:hover { box-shadow: 0 15px 45px rgba(0,0,0,.15), 0 0 0 1px rgba(255,255,255,.08) inset; }
+    /* Progress bar animation */
+    .progress-smooth { transition: width 400ms ease; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-emerald-600 via-cyan-600 to-indigo-700 text-white">
+  <div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="w-full">
+      <div class="max-w-6xl mx-auto px-6 pt-8 pb-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Flashcards คำกริยาไม่ปกติ</h1>
+            <p class="text-white/80">แตะหรือคลิกการ์ดเพื่อพลิก | ทำเครื่องหมายว่า “จำได้” เพื่อเพิ่มความคืบหน้า</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-4 py-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+              <span id="statCount" class="font-semibold">0 / 0</span>
+            </span>
+            <span class="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-4 py-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 18 0" stroke="white" stroke-width="2"/><path d="M12 3a9 9 0 0 0 0 18" stroke="white" stroke-width="2"/></svg>
+              <span id="statKnown" class="font-semibold">เรียนแล้ว 0</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="mt-4 bg-white/10 rounded-full overflow-hidden h-3">
+          <div id="progressBar" class="h-full bg-lime-300 progress-smooth" style="width: 0%"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <section class="w-full">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="flex flex-wrap gap-3 items-center justify-between bg-white/10 backdrop-blur rounded-2xl p-4">
+          <div class="flex flex-wrap gap-3">
+            <button id="btnPrev" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition shadow-sm hover-glow" title="ก่อนหน้า">
+              ← ก่อนหน้า
+            </button>
+            <button id="btnShuffle" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition shadow-sm hover-glow" title="สลับลำดับ">
+              สลับลำดับ
+            </button>
+            <button id="btnReset" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition shadow-sm hover-glow" title="รีเซ็ตความคืบหน้า">
+              รีเซ็ตความคืบหน้า
+            </button>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="btnHelp" class="px-4 py-2 rounded-xl bg-amber-300 text-emerald-900 font-semibold hover:bg-amber-200 transition shadow-sm hover-glow">
+              วิธีเล่น
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card Area -->
+    <main class="flex-1 w-full">
+      <div class="max-w-6xl mx-auto px-6 py-8">
+        <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+          <!-- Flashcard -->
+          <div class="scene relative">
+            <div id="card" class="card-3d relative h-[420px] md:h-[460px] bg-white/5 rounded-3xl shadow-2xl hover-glow cursor-pointer">
+              <!-- FRONT -->
+              <div class="card-face absolute inset-0 p-7 md:p-10">
+                <div class="h-full flex flex-col">
+                  <div class="flex items-center gap-2 text-sm text-white/70">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10">1</span>
+                    <span>คำศัพท์</span>
+                  </div>
+                  <div class="mt-auto">
+                    <div id="frontWord" class="text-3xl md:text-5xl font-extrabold leading-tight drop-shadow-sm"></div>
+                    <p class="mt-3 text-white/80">แตะ/คลิกการ์ดเพื่อดูรูปอดีตและความหมาย</p>
+                  </div>
+                  <div class="mt-8 flex items-center justify-between text-white/70">
+                    <span id="cardPosition" class="text-sm bg-white/10 px-3 py-1.5 rounded-full">การ์ดที่ 1/1</span>
+                    <span class="text-sm inline-flex items-center gap-2">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 6v12m6-6H6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                      พลิกเพื่อดูคำตอบ
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <!-- BACK -->
+              <div class="card-face card-back absolute inset-0 p-7 md:p-10 bg-white/10 rounded-3xl">
+                <div class="h-full flex flex-col">
+                  <div class="flex items-center gap-2 text-sm text-white/80">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10">2</span>
+                    <span>คำตอบ</span>
+                  </div>
+                  <div class="mt-6 grid grid-cols-1 gap-4">
+                    <div class="bg-white/10 rounded-2xl p-4">
+                      <div class="text-white/70 text-sm">ช่อง 1</div>
+                      <div id="col1" class="text-xl md:text-2xl font-semibold"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="bg-white/10 rounded-2xl p-4">
+                        <div class="text-white/70 text-sm">ช่อง 2</div>
+                        <div id="col2" class="text-xl font-semibold"></div>
+                      </div>
+                      <div class="bg-white/10 rounded-2xl p-4">
+                        <div class="text-white/70 text-sm">ช่อง 3</div>
+                        <div id="col3" class="text-xl font-semibold"></div>
+                      </div>
+                    </div>
+                    <div class="bg-lime-300/90 text-emerald-900 rounded-2xl p-4">
+                      <div class="text-emerald-900/80 text-sm">ความหมาย</div>
+                      <div id="meaning" class="text-xl md:text-2xl font-bold"></div>
+                    </div>
+                  </div>
+                  <div class="mt-auto text-right text-white/80 text-sm">แตะ/คลิกการ์ดเพื่อกลับด้าน</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions & Summary -->
+          <div class="flex flex-col gap-6">
+            <div class="bg-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+              <div class="flex flex-col gap-4">
+                <h2 class="text-xl font-semibold">ตัวเลือกการตอบ</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <button id="btnAgain" class="px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/20 transition text-white shadow hover-glow">
+                    ยังไม่ชัวร์
+                  </button>
+                  <button id="btnSkip" class="px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/20 transition text-white shadow hover-glow">
+                    ข้าม
+                  </button>
+                  <button id="btnKnown" class="px-5 py-4 rounded-2xl bg-lime-300 text-emerald-900 font-bold hover:bg-lime-200 transition shadow hover-glow">
+                    จำได้ ✔
+                  </button>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                  <div class="bg-white/10 rounded-2xl p-4">
+                    <div class="text-white/70 text-sm">เหลืออีก</div>
+                    <div id="statLeft" class="text-2xl font-bold">0</div>
+                  </div>
+                  <div class="bg-white/10 rounded-2xl p-4">
+                    <div class="text-white/70 text-sm">เปอร์เซ็นต์ความคืบหน้า</div>
+                    <div id="statPercent" class="text-2xl font-bold">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+              <h3 class="text-lg font-semibold mb-3">ทิปสั้นๆ</h3>
+              <ul class="list-disc pl-5 space-y-2 text-white/90">
+                <li>แตะการ์ดเพื่อสลับหน้า-หลังได้ทุกเมื่อ</li>
+                <li>กด “จำได้” เพื่อบันทึกความคืบหน้า (บันทึกอัตโนมัติในเครื่อง)</li>
+                <li>ใช้ “สลับลำดับ” เพื่อสุ่มการ์ด</li>
+                <li>กด “รีเซ็ตความคืบหน้า” เพื่อเริ่มใหม่เมื่อพร้อม</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full pb-10">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center text-white/70">
+          สร้างโดย Canva Code — เล่นให้ครบแล้วกลับมาทบทวนอีกครั้ง!
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative bg-white text-emerald-900 rounded-3xl w-[92%] max-w-xl p-6 md:p-8 shadow-2xl">
+      <div class="flex items-start justify-between gap-4">
+        <h4 class="text-xl font-bold">วิธีเล่น</h4>
+        <button id="helpClose" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">ปิด</button>
+      </div>
+      <div class="mt-4 space-y-3">
+        <p>1) แตะหรือคลิกการ์ดเพื่อพลิกดูคำตอบ</p>
+        <p>2) เลือก “จำได้” เมื่อมั่นใจ หรือ “ยังไม่ชัวร์/ข้าม” เพื่อไปใบถัดไป</p>
+        <p>3) แถบความคืบหน้าจะเพิ่มขึ้นเมื่อคุณจำได้มากขึ้น</p>
+        <p>4) ระบบจะบันทึกผลไว้ในเครื่องของคุณอัตโนมัติ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Congrats Modal -->
+  <div id="doneModal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative bg-white text-emerald-900 rounded-3xl w-[92%] max-w-xl p-6 md:p-8 shadow-2xl">
+      <div class="flex items-start justify-between gap-4">
+        <h4 class="text-xl font-bold">เยี่ยมมาก! คุณเรียนครบแล้ว 🎉</h4>
+        <button id="doneClose" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">ปิด</button>
+      </div>
+      <div class="mt-4 space-y-4">
+        <p>คุณทำเครื่องหมาย “จำได้” ครบทุกใบแล้ว ลองรีเซ็ตหรือทบทวนต่อได้เลย</p>
+        <div class="flex gap-3">
+          <button id="reviewAll" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">ทบทวนต่อ</button>
+          <button id="resetAll" class="px-4 py-2 rounded-xl bg-emerald-900 text-white hover:bg-emerald-950">รีเซ็ตความคืบหน้า</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data
+    const cards = [
+      { c1: "be (is, am, are)", c2: "was, were", c3: "been", meaning: "เป็น, อยู่, คือ" },
+      { c1: "become (บิคัม)", c2: "became", c3: "become", meaning: "กลายเป็น" },
+      { c1: "begin (บิกิน)", c2: "began", c3: "begun", meaning: "เริ่มต้น" },
+      { c1: "bet (เบ็ท)", c2: "bet", c3: "bet", meaning: "พนัน" },
+      { c1: "bite (ไบท)", c2: "bit", c3: "bitten (or bit)", meaning: "กัด" },
+      { c1: "bleed (บลัด)", c2: "bled", c3: "bled", meaning: "เลือดออก" },
+      { c1: "blow (โบล)", c2: "blew", c3: "blown", meaning: "เป่า, พัด" },
+      { c1: "break (เบรก)", c2: "broke", c3: "broken", meaning: "แตก, หัก" },
+      { c1: "bring (บริง)", c2: "brought", c3: "brought", meaning: "นำมา, เอามา" },
+      { c1: "build (บิลด์)", c2: "built", c3: "built", meaning: "สร้าง" },
+      { c1: "burst (เบิสท์)", c2: "burst", c3: "burst", meaning: "ระเบิด" },
+      { c1: "buy (บาย)", c2: "bought", c3: "bought", meaning: "ซื้อ" },
+      { c1: "catch (แค็ทช)", c2: "caught", c3: "caught", meaning: "จับ, ขึ้นรถ" },
+      { c1: "choose (ชูส)", c2: "chose", c3: "chosen", meaning: "เลือก" },
+      { c1: "come (คัม)", c2: "came", c3: "come", meaning: "มา" },
+      { c1: "cost (คอสท์)", c2: "cost", c3: "cost", meaning: "มีราคา" },
+      { c1: "cut (คัท)", c2: "cut", c3: "cut", meaning: "ตัด" },
+      { c1: "dig (ดิก)", c2: "dug", c3: "dug", meaning: "ขุด" },
+      { c1: "dive (ไดฝ)", c2: "dived (or dove)", c3: "dived", meaning: "ดำน้ำ" },
+      { c1: "do (ดู)", c2: "did", c3: "done", meaning: "ทำ" },
+      { c1: "draw (ดรอ)", c2: "drew", c3: "drawn", meaning: "วาด, ลาก" },
+      { c1: "drink (ดริงค์)", c2: "drank", c3: "drunk", meaning: "ดื่ม" },
+      { c1: "drive (ไดรฟ์)", c2: "drove", c3: "driven", meaning: "ขับ" },
+      { c1: "eat (อีท)", c2: "ate", c3: "eaten", meaning: "กิน" },
+      { c1: "fall (ฟอล)", c2: "fell", c3: "fallen", meaning: "ตก, หล่น" },
+      { c1: "feel (ฟีล)", c2: "felt", c3: "felt", meaning: "รู้สึก" },
+      { c1: "fight (ไฟท์)", c2: "fought", c3: "fought", meaning: "ต่อสู้" },
+      { c1: "find (ไฟนด์)", c2: "found", c3: "found", meaning: "พบ" },
+      { c1: "fly (ฟลาย)", c2: "flew", c3: "flown", meaning: "บิน" },
+      { c1: "forbid (ฟอร์บิด)", c2: "forbade", c3: "forbidden", meaning: "ห้าม" },
+      { c1: "forget (ฟอร์เก็ต)", c2: "forgot", c3: "forgotten", meaning: "ลืม" },
+      { c1: "freeze (ฟรีซ)", c2: "froze", c3: "frozen", meaning: "แข็งตัว, หนาว" },
+      { c1: "get (เก็ท)", c2: "got", c3: "got", meaning: "ได้รับ" },
+      { c1: "give (กิฟ)", c2: "gave", c3: "given", meaning: "ให้" },
+      { c1: "go (โก)", c2: "went", c3: "gone", meaning: "ไป" },
+      { c1: "grind (ไกรนด์)", c2: "ground", c3: "ground", meaning: "บด, ลับ" },
+      { c1: "grow (โกรว์)", c2: "grew", c3: "grown", meaning: "เติบโต, ปลูก" },
+      { c1: "hang (pictures)", c2: "hung", c3: "hung", meaning: "แขวน, ห้อย" },
+      { c1: "hang (people)", c2: "hanged", c3: "hanged", meaning: "แขวนคอ" },
+      { c1: "have (แฮฟ)", c2: "had", c3: "had", meaning: "มี" },
+      { c1: "hear (เฮียร์)", c2: "heard", c3: "heard", meaning: "ได้ยิน" },
+      { c1: "hide (ไฮด์)", c2: "hid", c3: "hidden", meaning: "ซ่อน" },
+      { c1: "hurt (เฮิร์ท)", c2: "hurt", c3: "hurt", meaning: "ทำร้าย" },
+      { c1: "know (โนว์)", c2: "knew", c3: "known", meaning: "รู้" },
+      { c1: "lay (เลย์)", c2: "laid", c3: "laid", meaning: "วาง, ออกไข่" },
+      { c1: "lead (ลีด)", c2: "led", c3: "led", meaning: "นำ" },
+      { c1: "learn (เลิร์น)", c2: "learnt", c3: "learnt", meaning: "เรียนรู้" },
+      { c1: "leave (ลีฟ)", c2: "left", c3: "left", meaning: "ออกจาก, ทิ้ง" },
+    ];
+
+    // State & Storage
+    const K = {
+      progress: "irregular_verbs_progress_v1",
+      order: "irregular_verbs_order_v1"
+    };
+    let known = new Set(JSON.parse(localStorage.getItem(K.progress) || "[]"));
+    let order = JSON.parse(localStorage.getItem(K.order) || "null");
+    if (!order || !Array.isArray(order) || order.length !== cards.length) {
+      order = [...Array(cards.length).keys()];
+    }
+    let idx = 0;
+    let isFlipped = false;
+
+    // Elements
+    const el = {
+      card: document.getElementById("card"),
+      frontWord: document.getElementById("frontWord"),
+      col1: document.getElementById("col1"),
+      col2: document.getElementById("col2"),
+      col3: document.getElementById("col3"),
+      meaning: document.getElementById("meaning"),
+      btnAgain: document.getElementById("btnAgain"),
+      btnSkip: document.getElementById("btnSkip"),
+      btnKnown: document.getElementById("btnKnown"),
+      btnPrev: document.getElementById("btnPrev"),
+      btnShuffle: document.getElementById("btnShuffle"),
+      btnReset: document.getElementById("btnReset"),
+      statCount: document.getElementById("statCount"),
+      statKnown: document.getElementById("statKnown"),
+      statLeft: document.getElementById("statLeft"),
+      statPercent: document.getElementById("statPercent"),
+      progressBar: document.getElementById("progressBar"),
+      cardPosition: document.getElementById("cardPosition"),
+      helpModal: document.getElementById("helpModal"),
+      helpClose: document.getElementById("helpClose"),
+      btnHelp: document.getElementById("btnHelp"),
+      doneModal: document.getElementById("doneModal"),
+      doneClose: document.getElementById("doneClose"),
+      reviewAll: document.getElementById("reviewAll"),
+      resetAll: document.getElementById("resetAll"),
+    };
+
+    // Utils
+    function shuffle(array) {
+      const a = array.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function save() {
+      localStorage.setItem(K.progress, JSON.stringify([...known]));
+      localStorage.setItem(K.order, JSON.stringify(order));
+    }
+    function clampIndex(i) {
+      if (i < 0) return 0;
+      if (i >= order.length) return order.length - 1;
+      return i;
+    }
+    function firstUnknownIndex() {
+      for (let i = 0; i < order.length; i++) {
+        if (!known.has(order[i])) return i;
+      }
+      return -1;
+    }
+
+    // Rendering
+    function render() {
+      const current = cards[order[idx]];
+      // Card faces
+      el.frontWord.textContent = current.c1;
+      el.col1.textContent = current.c1;
+      el.col2.textContent = current.c2;
+      el.col3.textContent = current.c3;
+      el.meaning.textContent = current.meaning;
+
+      // Stats
+      const total = cards.length;
+      const k = known.size;
+      const left = total - k;
+      const percent = Math.round((k / total) * 100);
+      el.statCount.textContent = `${idx + 1} / ${total}`;
+      el.statKnown.textContent = `เรียนแล้ว ${k}`;
+      el.statLeft.textContent = left;
+      el.statPercent.textContent = `${percent}%`;
+      el.progressBar.style.width = `${percent}%`;
+      el.cardPosition.textContent = `การ์ดที่ ${idx + 1}/${total}`;
+
+      // Visual on known
+      const knownCurrent = known.has(order[idx]);
+      el.card.classList.toggle("ring-4", knownCurrent);
+      el.card.classList.toggle("ring-lime-300", knownCurrent);
+    }
+
+    function setFlip(v) {
+      isFlipped = v;
+      el.card.classList.toggle("is-flipped", isFlipped);
+    }
+
+    function nextCard() {
+      const total = order.length;
+      // Go to next index; if end, check completion
+      if (idx < total - 1) {
+        idx += 1;
+      } else {
+        // Completed one pass
+        if (known.size === total) {
+          openDone();
+        }
+        // Loop back to first unknown if any
+        const fu = firstUnknownIndex();
+        idx = fu !== -1 ? fu : 0;
+      }
+      setFlip(false);
+      render();
+      save();
+    }
+
+    function prevCard() {
+      if (idx > 0) idx -= 1;
+      setFlip(false);
+      render();
+      save();
+    }
+
+    function markKnownCurrent() {
+      known.add(order[idx]);
+      save();
+      render();
+      // Small success pulse
+      el.progressBar.classList.add("animate-pulse");
+      setTimeout(() => el.progressBar.classList.remove("animate-pulse"), 350);
+    }
+
+    // Modals
+    function openHelp() {
+      el.helpModal.classList.remove("hidden");
+      el.helpModal.classList.add("flex");
+    }
+    function closeHelp() {
+      el.helpModal.classList.add("hidden");
+      el.helpModal.classList.remove("flex");
+    }
+    function openDone() {
+      el.doneModal.classList.remove("hidden");
+      el.doneModal.classList.add("flex");
+    }
+    function closeDone() {
+      el.doneModal.classList.add("hidden");
+      el.doneModal.classList.remove("flex");
+    }
+
+    // Event wiring
+    el.card.addEventListener("click", () => setFlip(!isFlipped));
+    el.btnKnown.addEventListener("click", () => { markKnownCurrent(); nextCard(); });
+    el.btnAgain.addEventListener("click", () => { nextCard(); });
+    el.btnSkip.addEventListener("click", () => { nextCard(); });
+    el.btnPrev.addEventListener("click", () => { prevCard(); });
+    el.btnShuffle.addEventListener("click", () => {
+      order = shuffle(order);
+      idx = firstUnknownIndex();
+      if (idx === -1) idx = 0;
+      setFlip(false);
+      render();
+      save();
+    });
+    el.btnReset.addEventListener("click", () => {
+      if (confirm("ต้องการรีเซ็ตความคืบหน้าทั้งหมดหรือไม่?")) {
+        known = new Set();
+        idx = 0;
+        setFlip(false);
+        render();
+        save();
+      }
+    });
+    el.btnHelp.addEventListener("click", openHelp);
+    el.helpClose.addEventListener("click", closeHelp);
+
+    // Done modal actions
+    if (el.doneClose) el.doneClose.addEventListener("click", closeDone);
+    if (el.reviewAll) el.reviewAll.addEventListener("click", () => { closeDone(); nextCard(); });
+    if (el.resetAll) el.resetAll.addEventListener("click", () => {
+      known = new Set();
+      save();
+      closeDone();
+      render();
+    });
+
+    // Initialize at first unknown if exists
+    const startUnknown = firstUnknownIndex();
+    if (startUnknown !== -1) idx = startUnknown;
+    render();
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96bec9de41ad5cdf',t:'MTc1NDY1Mzc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
